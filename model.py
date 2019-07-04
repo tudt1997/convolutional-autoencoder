@@ -1,24 +1,26 @@
 from keras.layers import Input, Dense, Conv2D, Flatten, Activation, concatenate, \
-                         MaxPooling2D, UpSampling2D, ZeroPadding2D, Conv2DTranspose
+                         MaxPooling2D, UpSampling2D, ZeroPadding2D, Conv2DTranspose, Reshape
 from keras.models import Sequential, Model
 
 def autoencoder():
     input_img = Input(batch_shape=(None, 32, 32, 3))
 
-    x = Conv2D(64, (3, 3), activation='elu', padding='same')(input_img)
+    x = Conv2D(32, (3, 3), activation='elu', padding='same')(input_img)
+    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = Conv2D(64, (3, 3), activation='elu', padding='same')(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
     x = Conv2D(128, (3, 3), activation='elu', padding='same')(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(256, (3, 3), activation='elu', padding='same')(x)
-    encoded = MaxPooling2D((2, 2), padding='same')(x)
+    x = Flatten()(x)
+    encoded = Dense(512)(x)
 
-    # at this point the representation is (4, 4, 8) i.e. 128-dimensional
-
-    x = Conv2D(256, (3, 3), activation='elu', padding='same')(encoded)
-    x = UpSampling2D((2, 2))(x)
+    x = Dense(4 * 4 * 128)(encoded)
+    x = Reshape((4, 4, 128))(x)
     x = Conv2D(128, (3, 3), activation='elu', padding='same')(x)
     x = UpSampling2D((2, 2))(x)
     x = Conv2D(64, (3, 3), activation='elu', padding='same')(x)
+    x = UpSampling2D((2, 2))(x)
+    x = Conv2D(32, (3, 3), activation='elu', padding='same')(x)
     x = UpSampling2D((2, 2))(x)
     decoded = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(x)
 

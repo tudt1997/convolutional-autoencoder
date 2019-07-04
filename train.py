@@ -5,6 +5,8 @@ from keras.optimizers import Adam
 from keras.layers import Dense, BatchNormalization
 from keras.models import Sequential
 from model import autoencoder, custom_unet, unet
+from matplotlib import pyplot as plt
+
 # from custom_mobilenet_v2 import CustomMobileNetV2
 
 # Set TensorFlow to allow for growth. Helps compatibility.
@@ -56,11 +58,22 @@ validation_generator = image_generator.flow_from_directory('dataset',
                                 subset='validation')
 
 early_stopping = EarlyStopping(monitor='val_loss', min_delta=0.0, patience=5)
-checkpointer = ModelCheckpoint(monitor='val_loss', filepath='param/ae-left-weights.{epoch:02d}-{val_loss:.5f}.h5', verbose=1, save_best_only=True)
-losses = model.fit_generator(train_generator,
+# checkpointer = ModelCheckpoint(monitor='val_loss', filepath='param/ae-left-weights.{epoch:02d}-{val_loss:.5f}.h5', verbose=1, save_best_only=True)
+history = model.fit_generator(train_generator,
                             steps_per_epoch=train_generator.n // batch_size,
                             validation_data=validation_generator,
                             validation_steps=validation_generator.n // batch_size,
                             verbose=1,
                             epochs=20,
-                            callbacks=[early_stopping, checkpointer])
+                            callbacks=[early_stopping])
+
+model.save_weights('param/ae-left-weights.{:.3}.h5'.format(history.history['val_loss'][-1]))
+
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
